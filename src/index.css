@@ -1,0 +1,128 @@
+/* index.css - Global styles */
+:root {
+  --primary: #1b6b4a;
+  --secondary: #1a2a4a;
+  --accent: #c4252b;
+  --bg-light: #f5f7f6;
+  --card-white: #ffffff;
+  --shadow: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.02);
+  --shadow-hover: 0 20px 30px -10px rgba(0,0,0,0.12);
+  --radius: 20px;
+  --transition: 0.2s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+}
+
+body {
+  background: #f5f7f6;
+  color: #1e2a2f;
+  line-height: 1.5;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul {
+  list-style: none;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section-title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  color: #0a1a1e;
+}
+
+.section-sub {
+  color: #3a4a4e;
+  margin-bottom: 2.5rem;
+  font-size: 1.1rem;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-small {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  padding: 0.2rem 1.6rem;
+  border-radius: 60px;
+  font-size: 0.8rem;
+  transition: 0.2s;
+}
+
+.btn-small:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  padding: 0.3rem 1.4rem;
+  border-radius: 60px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: 0.2s;
+  border: 1px solid var(--primary);
+}
+
+.btn-primary:hover {
+  background: #14563b;
+}
+
+.btn-outline {
+  border: 1px solid #1b6b4a;
+  color: var(--primary);
+  padding: 0.3rem 1.2rem;
+  border-radius: 60px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: 0.2s;
+  background: transparent;
+}
+
+.btn-outline:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 0.8rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 60px;
+  font-weight: 600;
+  margin-top: 1.2rem;
+}
+
+@media (max-width: 600px) {
+  .section-title {
+    font-size: 1.6rem;
+  }
+}
