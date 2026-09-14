@@ -5,6 +5,19 @@ import { PageTitle } from './Shared';
 
 /* ------------------------------- Login ------------------------------- */
 
+function resolveReturnTo() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('returnTo');
+    if (!raw) return null;
+    // Only allow same-origin relative paths
+    if (!raw.startsWith('/')) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
 export function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +36,16 @@ export function Login({ onLogin }) {
       localStorage.setItem('databridge_token', data.token);
       localStorage.setItem('databridge_user', JSON.stringify(data.user));
 
-      onLogin(data.user);
+      if (typeof onLogin === 'function') {
+        onLogin(data.user);
+      }
+
+      const returnTo = resolveReturnTo();
+
+      if (returnTo) {
+        go(returnTo);
+        return;
+      }
 
       if (data.user.role === 'OFFICER') {
         go('/databridge');
@@ -98,7 +120,10 @@ export function Login({ onLogin }) {
           <button
             className="inline"
             type="button"
-            onClick={() => go('/register')}
+            onClick={() => {
+              const returnTo = resolveReturnTo();
+              go(returnTo ? `/register?returnTo=${encodeURIComponent(returnTo)}` : '/register');
+            }}
           >
             Create an account
           </button>
@@ -122,7 +147,18 @@ export function Login({ onLogin }) {
 
 /* ------------------------------ Register ------------------------------ */
 
-export function Register() {
+function resolveReturnToForRegister() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('returnTo');
+    if (!raw || !raw.startsWith('/')) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+export function Register({ onLogin }) {
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -167,12 +203,36 @@ export function Register() {
     setError('');
 
     try {
-      await api.post('/auth/register', {
+      const { data } = await api.post('/auth/register', {
         name: form.name,
         email: form.email,
         phone: form.phone,
         password: form.password
       });
+
+      // Auto-login the newly registered citizen
+      if (data?.token && data?.user) {
+        localStorage.setItem('databridge_token', data.token);
+        localStorage.setItem('databridge_user', JSON.stringify(data.user));
+
+        if (typeof onLogin === 'function') {
+          onLogin(data.user);
+        }
+
+        const returnTo = resolveReturnToForRegister();
+        setSuccess(true);
+
+        // Short delay so the success screen renders, then navigate
+        setTimeout(() => {
+          if (returnTo) {
+            go(returnTo);
+          } else {
+            go('/');
+          }
+        }, 600);
+        return;
+      }
+
       setSuccess(true);
     } catch (err) {
       setError(
@@ -186,6 +246,7 @@ export function Register() {
   };
 
   if (success) {
+    const returnTo = resolveReturnToForRegister();
     return (
       <PageTitle
         eyebrow="ACCOUNT CREATED"
@@ -195,11 +256,15 @@ export function Register() {
           <i>✓</i>
           <h2>Your account has been created.</h2>
           <p>
-            Please sign in to continue to your citizen service dashboard.
+            {returnTo
+              ? 'Taking you back to your application…'
+              : 'Please sign in to continue to your citizen service dashboard.'}
           </p>
-          <button className="btn" type="button" onClick={() => go('/login')}>
-            Sign in →
-          </button>
+          {!returnTo && (
+            <button className="btn" type="button" onClick={() => go('/login')}>
+              Sign in →
+            </button>
+          )}
         </div>
       </PageTitle>
     );
@@ -296,7 +361,10 @@ export function Register() {
           <button
             className="inline"
             type="button"
-            onClick={() => go('/login')}
+            onClick={() => {
+              const returnTo = resolveReturnToForRegister();
+              go(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
+            }}
           >
             Sign in
           </button>

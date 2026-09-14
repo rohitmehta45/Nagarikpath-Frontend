@@ -13,13 +13,11 @@ const api = axios.create({
 api.interceptors.request.use(config => {
   try {
     const token = localStorage.getItem('databridge_token');
-
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch {}
-
   return config;
 });
 
@@ -29,7 +27,11 @@ api.interceptors.response.use(
     const status = err?.response?.status;
     const url = err?.config?.url || '';
 
-    const optional = [
+    // Only swallow 404s on optional GET endpoints — never on POST/PATCH.
+    const isReadOnly =
+      (err?.config?.method || 'get').toLowerCase() === 'get';
+
+    const optionalReads = [
       '/audit-logs',
       '/government-notices',
       '/notifications'
@@ -37,9 +39,18 @@ api.interceptors.response.use(
 
     if (
       status === 404 &&
-      optional.some(p => url.includes(p))
+      isReadOnly &&
+      optionalReads.some(p => url.includes(p))
     ) {
       return Promise.resolve({ data: {} });
+    }
+
+    // If the token is invalid/expired, clear it so the UI can redirect.
+    if (status === 401) {
+      try {
+        localStorage.removeItem('databridge_token');
+        localStorage.removeItem('databridge_user');
+      } catch {}
     }
 
     const message =
@@ -49,7 +60,7 @@ api.interceptors.response.use(
 
     const wrapped = new Error(message);
     wrapped.status = status;
-
+    wrapped.response = err?.response;
     return Promise.reject(wrapped);
   }
 );

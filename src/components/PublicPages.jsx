@@ -15,6 +15,7 @@ import {
   pushAuditLog,
   listApplicationsForUser
 } from '../utils/applications';
+import { isLoggedIn, requireLogin } from '../utils/auth';
 
 /* ------------------------------- Home ------------------------------- */
 
@@ -24,12 +25,10 @@ export function Home({ hideHero = false }) {
       {!hideHero && (
         <section className="hero">
           <div className="contour" />
-
           <div className="hero-art">
             <div className="sun" />
             <div className="mountain m1" />
             <div className="mountain m2" />
-
             <div className="document">
               <div className="seal">नि</div>
               <b>
@@ -40,11 +39,9 @@ export function Home({ hideHero = false }) {
               <span>Guidance record · 2026</span>
               <div className="doc-lines" />
             </div>
-
             <div className="chip">◈ Personalized guidance</div>
             <div className="chip two">✓ Transparent tracking</div>
           </div>
-
           <div className="hero-copy">
             <span className="kicker">
               CITIZEN SERVICE GUIDANCE · NEPAL
@@ -59,7 +56,6 @@ export function Home({ hideHero = false }) {
               your application and follow your citizenship service journey
               from one place.
             </p>
-
             <div className="actions">
               <button
                 className="btn"
@@ -76,7 +72,6 @@ export function Home({ hideHero = false }) {
                 Check eligibility <span>↗</span>
               </button>
             </div>
-
             <p className="mini-note">
               A guided digital workflow — always confirm requirements with
               the competent authority.
@@ -90,7 +85,6 @@ export function Home({ hideHero = false }) {
           <span className="kicker">START HERE</span>
           <h2>What do you need today?</h2>
         </div>
-
         {[
           ['◈', 'Find a service', 'Explore citizenship service guidance', '/services'],
           ['⌁', 'Check eligibility', 'Get a recommended service path', '/eligibility'],
@@ -127,7 +121,6 @@ export function Home({ hideHero = false }) {
             Explore the service journey <span>→</span>
           </button>
         </div>
-
         <ol>
           {[
             ['01', 'Discover', 'Compare services and find the right starting point.'],
@@ -158,7 +151,6 @@ export function Home({ hideHero = false }) {
             View all services →
           </button>
         </div>
-
         <div className="service-grid">
           {services.slice(0, 3).map(service => (
             <ServiceCard key={service.id} s={service} />
@@ -174,7 +166,6 @@ export function Home({ hideHero = false }) {
             Build confidence with a clear list of required, conditional and
             additional-verification documents.
           </p>
-
           <div className="progress-label">
             <span>Checklist progress</span>
             <b>70% complete</b>
@@ -182,7 +173,6 @@ export function Home({ hideHero = false }) {
           <div className="progress">
             <i style={{ width: '70%' }} />
           </div>
-
           {[
             'Birth registration certificate',
             'Parent citizenship certificates',
@@ -199,7 +189,6 @@ export function Home({ hideHero = false }) {
               <b>{index < 2 ? 'Verified' : 'Required'}</b>
             </div>
           ))}
-
           <button
             className="btn"
             type="button"
@@ -208,7 +197,6 @@ export function Home({ hideHero = false }) {
             Open checklist →
           </button>
         </div>
-
         <div className="tracking-preview">
           <span className="kicker">TRACKING, WITHOUT GUESSWORK</span>
           <h2>Every update has a place.</h2>
@@ -216,9 +204,7 @@ export function Home({ hideHero = false }) {
             Follow a clear, respectful timeline and know when action is
             needed from you.
           </p>
-
           <Timeline status="Officer review" />
-
           <button
             className="text-btn"
             type="button"
@@ -247,7 +233,7 @@ export function Home({ hideHero = false }) {
         <div className="section-top">
           <div>
             <span className="kicker">SERVICE UPDATES</span>
-            <h2>Notices &amp; information</h2>
+            <h2>Notices & information</h2>
           </div>
           <button
             className="outline"
@@ -257,7 +243,6 @@ export function Home({ hideHero = false }) {
             All notices →
           </button>
         </div>
-
         {notices.map(notice => (
           <article key={notice[0]}>
             <span>{notice[1]}</span>
@@ -278,7 +263,6 @@ export function Home({ hideHero = false }) {
 export function Services() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
-
   const categories = [
     'All',
     ...new Set(services.map(s => s.category))
@@ -308,7 +292,6 @@ export function Services() {
             placeholder="Search citizenship services"
           />
         </label>
-
         <select
           value={category}
           onChange={event => setCategory(event.target.value)}
@@ -357,7 +340,6 @@ export function ServiceDetail({ id }) {
               determine applicable requirements and any final decision.
             </p>
           </section>
-
           <section>
             <h2>Who can apply</h2>
             <p>
@@ -365,7 +347,6 @@ export function ServiceDetail({ id }) {
               subject to verification by the responsible office.
             </p>
           </section>
-
           <section>
             <h2>Required documents</h2>
             {service.docs.map(document => (
@@ -380,7 +361,6 @@ export function ServiceDetail({ id }) {
               </div>
             ))}
           </section>
-
           <section>
             <h2>How the workflow works</h2>
             <div className="workflow">
@@ -500,7 +480,6 @@ export function Eligibility() {
           <div className="question">
             <span>Question {step + 1} of 3</span>
             <h2>{questions[step][1]}</h2>
-
             <div>
               {questions[step][2].map(option => (
                 <button
@@ -523,7 +502,6 @@ export function Eligibility() {
                 </button>
               ))}
             </div>
-
             <button
               className="btn"
               type="button"
@@ -541,7 +519,6 @@ export function Eligibility() {
               Based on the answers you gave, this is the most relevant
               service path to explore.
             </p>
-
             <div>
               <b>Why this was recommended</b>
               <p>
@@ -550,7 +527,6 @@ export function Eligibility() {
                 responsible office will confirm the appropriate process.
               </p>
             </div>
-
             <div>
               <b>Prepare to review</b>
               <ul>
@@ -559,7 +535,6 @@ export function Eligibility() {
                 ))}
               </ul>
             </div>
-
             <button
               className="btn"
               type="button"
@@ -567,7 +542,6 @@ export function Eligibility() {
             >
               Start this service →
             </button>
-
             <button
               className="text-btn"
               type="button"
@@ -578,7 +552,6 @@ export function Eligibility() {
             >
               Start again
             </button>
-
             <p className="disclaimer">
               This eligibility result is provided as general service
               guidance only and does not constitute a legal decision or
@@ -631,7 +604,6 @@ const ZONES = [
 
 export function Apply() {
   const [step, setStep] = useState(0);
-
   const params = new URLSearchParams(window.location.search);
   const initialService = params.get('service') || 'new';
 
@@ -644,6 +616,18 @@ export function Apply() {
   const [created, setCreated] = useState(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  /* ── Auth guard ────────────────────────────────────────────────────
+   * If the visitor isn't logged in, bounce them to /login with
+   * ?returnTo=/apply?service=... so they come straight back here.
+   * ────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      requireLogin(
+        `/apply?service=${encodeURIComponent(initialService)}`
+      );
+    }
+  }, [initialService]);
 
   const steps = [
     'Service',
@@ -711,7 +695,6 @@ export function Apply() {
     body = (
       <>
         <h2>Personal information</h2>
-
         <label>
           Full name
           <input
@@ -721,7 +704,6 @@ export function Apply() {
             placeholder="Use demo information only"
           />
         </label>
-
         <div className="form-grid">
           <label>
             Date of birth
@@ -732,7 +714,6 @@ export function Apply() {
               onChange={event => set('dob', event.target.value)}
             />
           </label>
-
           <label>
             Gender
             <select
@@ -753,7 +734,6 @@ export function Apply() {
     body = (
       <>
         <h2>Family details</h2>
-
         <label>
           Father's full name
           <input
@@ -762,7 +742,6 @@ export function Apply() {
             onChange={event => set('fatherName', event.target.value)}
           />
         </label>
-
         <label>
           Father's date of birth
           <input
@@ -771,7 +750,6 @@ export function Apply() {
             onChange={event => set('fatherDob', event.target.value)}
           />
         </label>
-
         <label>
           Mother's full name
           <input
@@ -780,7 +758,6 @@ export function Apply() {
             onChange={event => set('motherName', event.target.value)}
           />
         </label>
-
         <label>
           Mother's date of birth
           <input
@@ -795,7 +772,6 @@ export function Apply() {
     body = (
       <>
         <h2>Address</h2>
-
         <div className="form-grid">
           <label>
             Province
@@ -810,7 +786,6 @@ export function Apply() {
               ))}
             </select>
           </label>
-
           <label>
             Zone
             <select
@@ -824,7 +799,6 @@ export function Apply() {
             </select>
           </label>
         </div>
-
         <div className="form-grid">
           <label>
             District
@@ -839,7 +813,6 @@ export function Apply() {
               ))}
             </select>
           </label>
-
           <label>
             Municipality / Rural municipality
             <input
@@ -849,7 +822,6 @@ export function Apply() {
             />
           </label>
         </div>
-
         <label>
           Ward number
           <input
@@ -865,7 +837,6 @@ export function Apply() {
     body = (
       <>
         <h2>Contact information</h2>
-
         <label>
           Email address
           <input
@@ -875,7 +846,6 @@ export function Apply() {
             onChange={event => set('email', event.target.value)}
           />
         </label>
-
         <label>
           Mobile number
           <input
@@ -895,17 +865,14 @@ export function Apply() {
           Upload a recent passport-size photograph and a thumb impression.
           These are stored locally in this prototype.
         </p>
-
         <div className="upload-grid">
           <div className="upload-card">
             <span className="kicker">PHOTOGRAPH</span>
-
             {form.photo ? (
               <img src={form.photo} alt="" className="upload-preview" />
             ) : (
               <div className="upload-placeholder">▧</div>
             )}
-
             <label className="upload-btn">
               {form.photo ? 'Replace photo' : 'Choose photo'}
               <input
@@ -916,16 +883,13 @@ export function Apply() {
               />
             </label>
           </div>
-
           <div className="upload-card">
             <span className="kicker">THUMB IMPRESSION</span>
-
             {form.thumb ? (
               <img src={form.thumb} alt="" className="upload-preview" />
             ) : (
               <div className="upload-placeholder">☝</div>
             )}
-
             <label className="upload-btn">
               {form.thumb ? 'Replace thumb' : 'Choose thumb image'}
               <input
@@ -946,7 +910,6 @@ export function Apply() {
     body = (
       <>
         <h2>Review your application</h2>
-
         <div className="review">
           <b>{selectedService.name}</b>
           <span>Applicant: {form.fullName || 'Not entered'}</span>
@@ -965,13 +928,11 @@ export function Apply() {
             {form.thumb ? 'Thumb ✓' : 'Thumb —'}
           </span>
         </div>
-
         {error && (
           <p className="auth-error" role="alert">
             {error}
           </p>
         )}
-
         <p>
           By continuing, you acknowledge this is a prototype demonstration
           and the authority will need to validate any real information.
@@ -1011,6 +972,16 @@ export function Apply() {
       setError(message);
       return;
     }
+
+    /* ── Final safety net: session could have expired while filling
+     *    the form. If so, send them back to login and preserve state. */
+    if (!isLoggedIn()) {
+      requireLogin(
+        `/apply?service=${encodeURIComponent(form.service)}`
+      );
+      return;
+    }
+
     setError('');
     setSubmitting(true);
 
@@ -1019,7 +990,7 @@ export function Apply() {
 
     try {
       /* Server derives userId from the JWT and writes
-         notification + government notice + audit log itself. */
+       * notification + government notice + audit log itself. */
       const app = await createApplication({
         service: form.service,
         serviceName: selectedService.name,
@@ -1157,7 +1128,6 @@ export function Checklist() {
             <i className={item[2] === 'Verified' ? 'good' : ''}>
               {item[2] === 'Verified' ? '✓' : '▧'}
             </i>
-
             <div>
               <span className="badge">{item[1]}</span>
               <h3>{item[0]}</h3>
@@ -1169,11 +1139,9 @@ export function Checklist() {
                     : 'Ready for officer review.'}
               </p>
             </div>
-
             <div className={`doc-status ${statusClass(item[2])}`}>
               {item[2]}
             </div>
-
             {item[2] !== 'Verified' && (
               <button
                 type="button"
@@ -1217,7 +1185,6 @@ function LiveTimeline({ app }) {
       {STAGES.map((stage, index) => {
         const isDone = index < reachedIndex;
         const isCurrent = index === reachedIndex;
-
         return (
           <div key={stage}>
             <i
@@ -1265,9 +1232,11 @@ export function Track() {
   const [applications, setApplications] = useState(() =>
     listApplicationsForUser(userId)
   );
+
   const [manualId, setManualId] = useState(
     listApplicationsForUser(userId)[0]?.id || ''
   );
+
   const [loadedManual, setLoadedManual] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -1300,7 +1269,6 @@ export function Track() {
   const submitManual = async () => {
     const trimmed = manualId.trim();
     if (!trimmed) return;
-
     setLoading(true);
     try {
       const list = await fetchUserApplications(userId);
@@ -1378,10 +1346,8 @@ export function Track() {
               {new Date(current.createdAt).toLocaleString()}
             </p>
           </div>
-
           <div className="tracking-full">
             <LiveTimeline app={current} />
-
             <aside>
               <b>Current stage</b>
               <h3>{current.status}</h3>
@@ -1395,7 +1361,6 @@ export function Track() {
               <small>
                 Timeline updates are controlled by the responsible office.
               </small>
-
               <div className="track-actions">
                 <button
                   className="outline small"
@@ -1405,7 +1370,6 @@ export function Track() {
                 >
                   {loading ? 'Refreshing…' : 'Refresh status'}
                 </button>
-
                 {current.status === 'COMPLETED' && (
                   <button
                     className="btn small"
@@ -1430,7 +1394,6 @@ export function Track() {
 
 export function Offices() {
   const [query, setQuery] = useState('');
-
   const filtered = offices.filter(office =>
     office.join(' ').toLowerCase().includes(query.toLowerCase())
   );
@@ -1623,12 +1586,10 @@ export function MessageForm({ kind }) {
               }
             />
           </label>
-
           <label>
             Application ID <small>(optional)</small>
             <input placeholder="CIT-2026-00001" />
           </label>
-
           {kind === 'complaints' && (
             <label>
               Category
@@ -1639,7 +1600,6 @@ export function MessageForm({ kind }) {
               </select>
             </label>
           )}
-
           <label>
             Message
             <textarea
@@ -1649,12 +1609,10 @@ export function MessageForm({ kind }) {
               placeholder="Tell us what happened or what could be better"
             />
           </label>
-
           <label className="file">
             Attachment <small>(optional)</small>
             <input type="file" />
           </label>
-
           <button className="btn" disabled={sending}>
             {sending ? 'Submitting…' : `Submit ${kind} →`}
           </button>

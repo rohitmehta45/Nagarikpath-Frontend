@@ -1,4 +1,3 @@
-
 import api from '../services/api';
 
 const KEY_APPS = 'databridge_applications';
@@ -26,13 +25,11 @@ const asArray = value => (Array.isArray(value) ? value : []);
 
 const mergeById = (primary, secondary) => {
   const map = new Map();
-
   [...asArray(primary), ...asArray(secondary)].forEach(item => {
     if (item?.id && !map.has(item.id)) {
       map.set(item.id, item);
     }
   });
-
   return [...map.values()];
 };
 
@@ -50,18 +47,18 @@ export const STAGES = [
 ];
 
 export const statusLabel = status => ({
-  SUBMITTED: 'Submitted', DOCUMENT_VERIFICATION: 'Document Verification',
-  OFFICER_REVIEW: 'Officer Review', ADDITIONAL_INFORMATION_REQUIRED: 'Additional Information Required',
-  FINAL_DECISION: 'Final Decision', COMPLETED: 'Completed', REJECTED: 'Rejected'
+  SUBMITTED: 'Submitted',
+  DOCUMENT_VERIFICATION: 'Document Verification',
+  OFFICER_REVIEW: 'Officer Review',
+  ADDITIONAL_INFORMATION_REQUIRED: 'Additional Information Required',
+  FINAL_DECISION: 'Final Decision',
+  COMPLETED: 'Completed',
+  REJECTED: 'Rejected'
 }[status] || status);
 
 export const nextStage = stage => {
   const index = STAGES.indexOf(stage);
-
-  if (index === -1 || index === STAGES.length - 1) {
-    return stage;
-  }
-
+  if (index === -1 || index === STAGES.length - 1) return stage;
   return STAGES[index + 1];
 };
 
@@ -75,14 +72,11 @@ export const getApplication = id =>
 
 export const fetchApplications = async () => {
   const local = asArray(readLocal(KEY_APPS));
-
   try {
     const { data } = await api.get('/applications');
     const remote = asArray(data?.applications || data);
     const merged = mergeById(remote, local);
-
     writeLocal(KEY_APPS, merged);
-
     return merged;
   } catch {
     return local;
@@ -93,20 +87,16 @@ export const fetchUserApplications = async userId => {
   const local = asArray(readLocal(KEY_APPS)).filter(
     application => application.userId === userId
   );
-
   try {
     const { data } = await api.get(
       `/applications?userId=${encodeURIComponent(userId)}`
     );
-
     const remote = asArray(data?.applications || data);
     const merged = mergeById(remote, local);
-
     writeLocal(
       KEY_APPS,
       mergeById(merged, asArray(readLocal(KEY_APPS)))
     );
-
     return merged;
   } catch {
     return local;
@@ -114,38 +104,34 @@ export const fetchUserApplications = async userId => {
 };
 
 export const fetchApplication = async id => {
-  if (!id) {
-    return null;
-  }
-
+  if (!id) return null;
   try {
     const { data } = await api.get(
       `/applications/${encodeURIComponent(id)}`
     );
-
     const application = data?.application || data;
-
     if (application?.id) {
       const others = readLocal(KEY_APPS).filter(
         item => item.id !== application.id
       );
-
       writeLocal(KEY_APPS, [application, ...others]);
     }
-
     return application || null;
   } catch (err) {
-    if (err?.status === 404) {
-      return null;
-    }
-
+    if (err?.status === 404) return null;
     return getApplication(id);
   }
 };
 
+/**
+ * Create an application on the server.
+ *
+ * IMPORTANT: We do NOT write to localStorage before the server confirms.
+ * That was the bug causing "citizen sees it, admin doesn't" — the citizen
+ * was seeing a local phantom application that never reached MongoDB.
+ */
 export const createApplication = async payload => {
   const now = new Date().toISOString();
-
   const draft = {
     createdAt: now,
     status: 'SUBMITTED',
@@ -159,41 +145,29 @@ export const createApplication = async payload => {
     ...payload
   };
 
-  try {
-    const { data } = await api.post('/applications', draft);
+  // No local write — wait for the server.
+  const { data } = await api.post('/applications', draft);
+  const saved = data?.application || data;
 
-    const saved = data?.application || data;
-
-    if (!saved?.id) {
-      throw new Error('Server did not return an application ID');
-    }
-
-    const localList = readLocal(KEY_APPS).filter(
-      application => application.id !== saved.id
-    );
-
-    writeLocal(KEY_APPS, [saved, ...localList]);
-
-    return saved;
-  } catch (err) {
-    console.error(
-      'Failed to create application:',
-      err?.response?.data || err?.message || err
-    );
-
-    throw err;
+  if (!saved?.id) {
+    throw new Error('Server did not return an application ID');
   }
+
+  // Only now persist locally, mirroring what the server stored.
+  const localList = readLocal(KEY_APPS).filter(
+    application => application.id !== saved.id
+  );
+  writeLocal(KEY_APPS, [saved, ...localList]);
+
+  return saved;
 };
 
 export const updateApplication = async (id, patch) => {
+  // Optimistic local merge
   const localList = readLocal(KEY_APPS);
-
   const mergedLocal = localList.map(application =>
-    application.id === id
-      ? { ...application, ...patch }
-      : application
+    application.id === id ? { ...application, ...patch } : application
   );
-
   writeLocal(KEY_APPS, mergedLocal);
 
   try {
@@ -201,9 +175,7 @@ export const updateApplication = async (id, patch) => {
       `/applications/${encodeURIComponent(id)}`,
       patch
     );
-
     const saved = data?.application || data;
-
     if (saved?.id) {
       writeLocal(
         KEY_APPS,
@@ -211,13 +183,11 @@ export const updateApplication = async (id, patch) => {
           application.id === id ? saved : application
         )
       );
-
       return saved;
     }
-
     return mergedLocal.find(application => application.id === id) || null;
   } catch (err) {
-    // Do not present a rejected protected update as a successful local change.
+    // Roll back optimistic local change on failure.
     writeLocal(KEY_APPS, localList);
     throw err;
   }
@@ -225,13 +195,9 @@ export const updateApplication = async (id, patch) => {
 
 export const advanceApplication = async (id, note) => {
   const application = getApplication(id);
-
-  if (!application) {
-    return null;
-  }
+  if (!application) return null;
 
   const stage = nextStage(application.status);
-
   const history = [
     ...(application.history || []),
     {
@@ -241,18 +207,12 @@ export const advanceApplication = async (id, note) => {
     }
   ];
 
-  return updateApplication(id, {
-    status: stage,
-    history
-  });
+  return updateApplication(id, { status: stage, history });
 };
 
 export const setApplicationStatus = async (id, status, note) => {
   const application = getApplication(id);
-
-  if (!application) {
-    return null;
-  }
+  if (!application) return null;
 
   const history = [
     ...(application.history || []),
@@ -263,22 +223,16 @@ export const setApplicationStatus = async (id, status, note) => {
     }
   ];
 
-  return updateApplication(id, {
-    status,
-    history
-  });
+  return updateApplication(id, { status, history });
 };
 
 export const fetchNotifications = async () => {
   const local = asArray(readLocal(KEY_NOTIFS));
-
   try {
     const { data } = await api.get('/notifications');
     const remote = asArray(data?.notifications || data);
     const merged = mergeById(remote, local);
-
     writeLocal(KEY_NOTIFS, merged);
-
     return merged;
   } catch {
     return local;
@@ -292,15 +246,9 @@ export const pushNotification = async payload => {
     read: false,
     ...payload
   };
-
-  writeLocal(KEY_NOTIFS, [
-    entry,
-    ...readLocal(KEY_NOTIFS)
-  ]);
-
+  writeLocal(KEY_NOTIFS, [entry, ...readLocal(KEY_NOTIFS)]);
   try {
     const { data } = await api.post('/notifications', entry);
-
     return data?.notification || data || entry;
   } catch {
     return entry;
@@ -313,29 +261,23 @@ export const markNotificationRead = async id => {
       ? { ...notification, read: true }
       : notification
   );
-
   writeLocal(KEY_NOTIFS, list);
-
   try {
     await api.patch(
       `/notifications/${encodeURIComponent(id)}/read`,
       { read: true }
     );
   } catch {}
-
   return list;
 };
 
 export const fetchAuditLogs = async () => {
   const local = asArray(readLocal(KEY_AUDIT));
-
   try {
     const { data } = await api.get('/audit-logs');
     const remote = asArray(data?.logs || data);
     const merged = mergeById(remote, local);
-
     writeLocal(KEY_AUDIT, merged);
-
     return merged;
   } catch {
     return local;
@@ -349,29 +291,20 @@ export const pushAuditLog = async payload => {
     actor: 'SYSTEM',
     ...payload
   };
-
-  writeLocal(
-    KEY_AUDIT,
-    [entry, ...readLocal(KEY_AUDIT)].slice(0, 500)
-  );
-
+  writeLocal(KEY_AUDIT, [entry, ...readLocal(KEY_AUDIT)].slice(0, 500));
   try {
     await api.post('/audit-logs', entry);
   } catch {}
-
   return entry;
 };
 
 export const fetchGovernmentNotices = async () => {
   const local = asArray(readLocal(KEY_GOV));
-
   try {
     const { data } = await api.get('/government-notices');
     const remote = asArray(data?.notices || data);
     const merged = mergeById(remote, local);
-
     writeLocal(KEY_GOV, merged);
-
     return merged;
   } catch {
     return local;
@@ -385,18 +318,9 @@ export const pushGovernmentNotice = async payload => {
     acknowledged: false,
     ...payload
   };
-
-  writeLocal(KEY_GOV, [
-    entry,
-    ...readLocal(KEY_GOV)
-  ]);
-
+  writeLocal(KEY_GOV, [entry, ...readLocal(KEY_GOV)]);
   try {
-    const { data } = await api.post(
-      '/government-notices',
-      entry
-    );
-
+    const { data } = await api.post('/government-notices', entry);
     return data?.notice || data || entry;
   } catch {
     return entry;
@@ -406,18 +330,15 @@ export const pushGovernmentNotice = async payload => {
 export const fileToDataUrl = file =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
-
     reader.onload = () => {
       resolve(String(reader.result));
     };
-
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 
 export const seedDemoApplication = () => {
   const list = readLocal(KEY_APPS);
-
   const seq = String(list.length + 1).padStart(5, '0');
   const id = `CIT-2026-${seq}`;
   const now = new Date().toISOString();
@@ -447,10 +368,7 @@ export const seedDemoApplication = () => {
       email: 'demo@example.test',
       phone: '9800000000'
     },
-    uploads: {
-      photo: '',
-      thumb: ''
-    },
+    uploads: { photo: '', thumb: '' },
     history: [
       {
         stage: 'SUBMITTED',
@@ -460,11 +378,6 @@ export const seedDemoApplication = () => {
     ]
   };
 
-  writeLocal(KEY_APPS, [
-    application,
-    ...list
-  ]);
-
+  writeLocal(KEY_APPS, [application, ...list]);
   return application;
 };
-
